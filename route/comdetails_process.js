@@ -6,7 +6,7 @@ const { body, validationResult } = require('express-validator');
 // Get all company_details: GET "/companydetails"
 router.get('/get', async (req, res) => {
   try {
-    const compdetails = await CompanyDetails.find({}, {});
+    const compdetails = await CompanyDetails.find({}, {__v: 0});
     // res.send(compdetails);
     res.status(200).json({ status: 'sucess', mssg: 'company details fetch', companyList: compdetails });
   } catch (error) {
@@ -16,18 +16,26 @@ router.get('/get', async (req, res) => {
 });
 
 //Get specific company_details:Get "/companydetails"
-router.get('/get/:id', async (req, res) => {
+router.post('/get', async (req, res) => {
   try {
-    const compdetails = await CompanyDetails.findById(req.params.id);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
+    }
+
+    const compdetails = await CompanyDetails.findById(id);
     if (!compdetails) {
       return res.status(404).json({ status: 'error', message: 'Company details not found' });
     }
+
     res.status(200).json({ status: 'success', message: 'Company details fetched', company: compdetails });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 
 // Create a company_details: POST "/companydetails"
@@ -88,9 +96,13 @@ router.post('/create', [
 });
 
 // Delete a company_details by ID: DELETE "/companydetails/:id"
-router.post('/delete/:id', async (req, res) => {
+router.post('/delete', async (req, res) => {
   try {
-    const compdetailsId = req.params.id;
+    const compdetailsId = req.body.id;
+    if (!compdetailsId) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
+    } 
+
     const result = await CompanyDetails.findByIdAndDelete(compdetailsId);
     if (result) {
       res.send('Company details deleted successfully');
@@ -104,7 +116,8 @@ router.post('/delete/:id', async (req, res) => {
 });
 
 // Update a company_details by ID: PATCH "/companydetails/:id"
-router.patch('/update/:id', [
+router.post ('/update', [
+  body('id').notEmpty().withMessage('company ID is required!'),
   body('company_name')
   .notEmpty().withMessage('Company Name is required!')
   .isLength({ min: 2 }).withMessage('Company Name should be at least 2 characters long'),
@@ -125,7 +138,7 @@ router.patch('/update/:id', [
     return res.status(400).json({ status: 'validation error', field: errorsArray[0]['path'], mssg: errorsArray[0]['msg'], });
 } else {
     try {
-      const compdetailsId = req.params.id;
+      const compdetailsId = req.body.id;
       const {
         company_name,
         ph_num,

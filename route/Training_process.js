@@ -6,7 +6,7 @@ const router = express.Router();
 // Get all technology: GET "/trainings"
 router.get('/get', async (req, res) => {
   try {
-    const trainings = await trainings_service.find({}, {});
+    const trainings = await trainings_service.find({}, {__v: 0});
     // res.send(compdetails);
     res.status(200).json({ status: 'sucess', mssg: 'trainings details fetch', trainingsList: trainings });
   } catch (error) {
@@ -16,17 +16,25 @@ router.get('/get', async (req, res) => {
 });
 
 //Get specific company_details:Get "/trainings"
-router.get('/get/:id', async (req, res) => {
+router.get('/get', async (req, res) => {
   try {
-    const trainings = await trainings_service.findById(req.params.id);
-    if (!trainings) {
-      return res.status(404).json({ status: 'error', message: 'Company details not found' });
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
     }
-    res.status(200).json({ status: 'success', message: 'trainings fetched', trainingsList: trainings });
+
+    const trainings = await trainings_service.findById(id);
+    if (!trainings) {
+      return res.status(404).json({ status: 'error', message: 'trainings details not found' });
+    }
+
+    res.status(200).json({ status: 'success', message: 'trainings details fetched', trainingsList: trainings });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
   }
 });
+
 
 module.exports = router;

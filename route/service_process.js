@@ -7,7 +7,7 @@ const { body, validationResult } = require('express-validator');
 
 router.get('/get', async (req, res) => {
   try {
-    const service = await service_area_details.find({}, {});
+    const service = await service_area_details.find({}, {__v: 0});
     // res.send(service);
     res.status(200).json({ status: 'sucess', mssg: 'service details fetch', serviceList: service });
   } catch (error) {
@@ -17,13 +17,20 @@ router.get('/get', async (req, res) => {
 });
 
 //Get specific company_details:Get "/service"
-router.get('/get/:id', async (req, res) => {
+router.post('/get', async (req, res) => {
   try {
-    const service = await service_area_details.findById(req.params.id);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
+    }
+
+    const service = await service_area_details.findById(id);
     if (!service) {
       return res.status(404).json({ status: 'error', message: 'service details not found' });
     }
-    res.status(200).json({ status: 'success', message: 'service details fetched', serviceList: service });
+
+    res.status(200).json({ status: 'success', message: 'service details fetched', servicelist: service });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
@@ -63,9 +70,12 @@ router.post('/create', [
 
 // Delete a service by ID: DELETE "/service"
 // router.delete('/:id', async (req, res)
-router.post('/delete/:id', async (req, res) => {
+router.post('/delete', async (req, res) => {
     try {
-      const serviceId = req.params.id;
+      const serviceId = req.body.id;
+      if (!serviceId) {
+        return res.status(400).json({ status: 'error', message: 'ID is required' });
+      } 
       const result = await service_area_details.findByIdAndDelete(serviceId);
       if (result) {
         res.send('service deleted successfully');
@@ -81,7 +91,7 @@ router.post('/delete/:id', async (req, res) => {
 // Update a service by ID: PATCH "/service"
 // router.patch('/:id', async (req, res) => {
 // router.patch('/', async (req, res) => {
-  router.patch('/update', [
+  router.post('/update', [
     body('id').notEmpty().withMessage('Service ID is required!'),
     body('updateData').notEmpty().withMessage('Update data is required!')
   ], async (req, res) => {

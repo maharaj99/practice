@@ -7,7 +7,7 @@ const { body, validationResult } = require('express-validator');
 
 router.get('/get', async (req, res) => {
   try {
-    const technology = await technology_service.find({}, {});
+    const technology = await technology_service.find({}, {__v: 0});
     res.status(200).json({ status: 'sucess', mssg: 'technology details fetch', technologyList: technology });
   } catch (error) {
     console.log(error.message);
@@ -16,12 +16,19 @@ router.get('/get', async (req, res) => {
 });
 
 //Get specific company_details:Get "/technology"
-router.get('/get/:id', async (req, res) => {
+router.post('/get', async (req, res) => {
   try {
-    const technology = await technology_service.findById(req.params.id);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
+    }
+
+    const technology = await technology_service.findById(id);
     if (!technology) {
       return res.status(404).json({ status: 'error', message: 'technology details not found' });
     }
+
     res.status(200).json({ status: 'success', message: 'technology details fetched', technologyList: technology });
   } catch (error) {
     console.log(error.message);
@@ -64,9 +71,12 @@ router.post('/create', [
 
 // Delete a technology by ID: DELETE "/technology"
 // router.delete('/:id', async (req, res)
-router.post('/delete/:id', async (req, res) => {
+router.post('/delete', async (req, res) => {
     try {
-      const technologyId = req.params.id;
+      const technologyId = req.body.id;
+      if (!technologyId) {
+        return res.status(400).json({ status: 'error', message: 'ID is required' });
+      } 
       const result = await technology_service.findByIdAndDelete(technologyId);
       if (result) {
         res.send('technology deleted successfully');
@@ -82,7 +92,7 @@ router.post('/delete/:id', async (req, res) => {
 // Update a technology by ID: PATCH "/technology"
 // router.patch('/:id', async (req, res) => {
 // router.patch('/', async (req, res) => {
-  router.patch('/update', [
+  router.post('/update', [
     body('id').notEmpty().withMessage('Technology ID is required!'),
     body('updateData').notEmpty().withMessage('Update data is required!')
   ], async (req, res) => {

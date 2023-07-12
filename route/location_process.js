@@ -6,7 +6,7 @@ const { body, validationResult } = require('express-validator');
 // Get all locations: GET "/locations"
 router.get('/get', async (req, res) => {
   try {
-    const locations = await location_service.find({}, {});
+    const locations = await location_service.find({}, {__v: 0});
     res.status(200).json({ status: 'sucess', mssg: 'locations details fetch', locationsList: locations });
   } catch (error) {
     console.log(error.message);
@@ -15,13 +15,20 @@ router.get('/get', async (req, res) => {
 });
 
 //Get specific company_details:Get "/locations"
-router.get('/get/:id', async (req, res) => {
+router.post('/get', async (req, res) => {
   try {
-    const locations = await location_service.findById(req.params.id);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
+    }
+
+    const locations = await location_service.findById(id);
     if (!locations) {
       return res.status(404).json({ status: 'error', message: 'locations details not found' });
     }
-    res.status(200).json({ status: 'success', message: 'locations details fetched', company: compdetails });
+
+    res.status(200).json({ status: 'success', message: 'locations details fetched', location: locations });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
@@ -74,9 +81,12 @@ router.post('/create', [
 
 // Delete a location by ID: DELETE "/locations"
 // router.delete('/:id', async (req, res)
-router.post('/delete/:id', async (req, res) => {
+router.post('/delete', async (req, res) => {
     try {
-      const locationId = req.params.id;
+      const locationId = req.body.id;
+      if (!locationId) {
+        return res.status(400).json({ status: 'error', message: 'ID is required' });
+      } 
       const result = await location_service.findByIdAndDelete(locationId);
       if (result) {
         res.send('Location deleted successfully');
@@ -92,7 +102,7 @@ router.post('/delete/:id', async (req, res) => {
 // Update a location by ID: PATCH "/location/:id"
 // router.patch('/:id', async (req, res) => {
 // router.patch('/', async (req, res) => {
-  router.patch('/update', [
+  router.post('/update', [
     body('id').notEmpty().withMessage('Location ID is required!'),
     body('updateData').notEmpty().withMessage('Update data is required!')
   ], async (req, res) => {

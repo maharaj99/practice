@@ -7,7 +7,7 @@ const { body, validationResult } = require('express-validator');
 
 router.get('/get', async (req, res) => {
   try {
-    const salary = await salary_range.find({}, {});
+    const salary = await salary_range.find({}, {__v: 0});
     res.status(200).json({ status: 'sucess', mssg: 'salary details fetch', salaryList: salary });
   } catch (error) {
     console.log(error.message);
@@ -16,13 +16,20 @@ router.get('/get', async (req, res) => {
 });
 
 //Get specific company_details:Get "/salary"
-router.get('/get/:id', async (req, res) => {
+router.post('/get', async (req, res) => {
   try {
-    const salary_range = await salary_range.findById(req.params.id);
-    if (!salary_range) {
-      return res.status(404).json({ status: 'error', message: 'salary_range details not found' });
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
     }
-    res.status(200).json({ status: 'success', message: 'salary_range details fetched', salary_rangeList: salary_range });
+
+    const salary = await salary_range.findById(id);
+    if (!salary) {
+      return res.status(404).json({ status: 'error', message: 'salary details not found' });
+    }
+
+    res.status(200).json({ status: 'success', message: 'salary details fetched', salaryList: salary });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
@@ -62,14 +69,17 @@ router.post('/create', [
 
 // Delete a salary by ID: DELETE "/salary"
 // router.delete('/:id', async (req, res)
-router.post('/delete/:id', async (req, res) => {
+router.post('/delete', async (req, res) => {
     try {
-      const salaryId = req.params.id;
+      const salaryId = req.body.id;
+      if (!salaryId) {
+        return res.status(400).json({ status: 'error', message: 'ID is required' });
+      } 
       const result = await salary_range.findByIdAndDelete(salaryId);
       if (result) {
         res.send('salary deleted successfully');
       } else {
-        res.status(404).send('experience not found');
+        res.status(404).send('salaryId not found');
       }
     } catch (error) {
       console.log(error.message);
@@ -80,7 +90,7 @@ router.post('/delete/:id', async (req, res) => {
 // Update a salary by ID: PATCH "/salary"
 // router.patch('/:id', async (req, res) => {
 // router.patch('/', async (req, res) => {
-  router.patch('/update', [
+  router.post('/update', [
     body('id').notEmpty().withMessage('Salary ID is required!'),
     body('updateData').notEmpty().withMessage('Update data is required!')
   ], async (req, res) => {

@@ -6,28 +6,37 @@ const { body, validationResult } = require('express-validator');
 // Get all experience: GET "/experience"
 router.get('/get', async (req, res) => {
   try {
-    const experience = await experience_master.find({}, {});
-    // res.send(compdetails);
-    res.status(200).json({ status: 'sucess', mssg: 'experience fetch', experience: experiencelist });
+    const experience = await experience_master.find({}, {__v: 0});
+    res.status(200).json({ status: 'sucess', mssg: 'experience fetch', experienceList: experience });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
   }
 });
 
-//Get specific company_details:Get "/experience"
-router.get('/get/:id', async (req, res) => {
+//Get specific company_details:Get "/experiencedetails"
+router.post('/get', async (req, res) => {
   try {
-    const experience = await experience_master.findById(req.params.id);
+    const { id } = req.body;
+
+    if (!id) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
+    }
+
+    const experience = await experience_master.findById(id);
     if (!experience) {
       return res.status(404).json({ status: 'error', message: 'experience details not found' });
     }
-    res.status(200).json({ status: 'success', message: 'experience details fetched', experience: experience });
+
+    res.status(200).json({ status: 'success', message: 'experience details fetched', experienceList: experience });
   } catch (error) {
     console.log(error.message);
     res.status(500).send('Internal Server Error');
   }
 });
+
+
+
 
 // Create an experience: POST "/experience"
 router.post('/create', [
@@ -65,9 +74,13 @@ router.post('/create', [
 });
 
 // Delete an experience by ID: DELETE "/experience"
-router.post('/delete/:id', async (req, res) => {
+router.post('/delete', async (req, res) => {
   try {
-    const experienceId = req.params.id;
+    const experienceId = req.body.id;
+    if (!experienceId) {
+      return res.status(400).json({ status: 'error', message: 'ID is required' });
+    } 
+
     const result = await experience_master.findByIdAndDelete(experienceId);
     if (result) {
       res.send('Experience deleted successfully');
@@ -81,7 +94,8 @@ router.post('/delete/:id', async (req, res) => {
 });
 
 // Update an experience by ID: PATCH "/experience"
-router.patch('/update/:id', [
+router.post('/update', [
+  body('id').notEmpty().withMessage('experience ID is required!'),
   body('experience.from').notEmpty().withMessage('From year is required!').isInt({ min: 0 }).withMessage('From year should be a non-negative integer!'),
   body('experience.to').notEmpty().withMessage('To year is required!').isInt({ min: 0 }).withMessage('To year should be a non-negative integer!'),
   body('details').notEmpty().withMessage('Details is required!'),
@@ -94,7 +108,7 @@ router.patch('/update/:id', [
     return res.status(400).json({ status: 'validation error', field: errorsArray[0]['path'], mssg: errorsArray[0]['msg'], });
 } else {
     try {
-      const experienceId = req.params.id;
+      const experienceId = req.body.id;
       const {
         experience,
         details,
