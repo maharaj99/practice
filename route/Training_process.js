@@ -1,6 +1,5 @@
 const express = require('express');
 const trainings_service = require('../model/trainings');
-
 const router = express.Router();
 
 // Get all technology: GET "/trainings"
@@ -15,26 +14,18 @@ router.get('/get', async (req, res) => {
   }
 });
 
-//Get specific company_details:Get "/trainings"
-router.get('/get', async (req, res) => {
-  try {
-    const { id } = req.body;
 
-    if (!id) {
-      return res.status(400).json({ status: 'error', message: 'ID is required' });
-    }
-
-    const trainings = await trainings_service.findById(id);
-    if (!trainings) {
-      return res.status(404).json({ status: 'error', message: 'trainings details not found' });
-    }
-
-    res.status(200).json({ status: 'success', message: 'trainings details fetched', trainingsList: trainings });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).send('Internal Server Error');
-  }
-});
+// Create a new training: POST "/trainings"
+// router.post('/create', async (req, res) => {
+//   try {
+//     const newTraining = req.body; // Assuming the request body contains the new training data
+//     const createdTraining = await trainings_service.create(newTraining);
+//     res.status(201).json({ status: 'success', message: 'Training created successfully', training: createdTraining });
+//   } catch (error) {
+//     console.log(error.message);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
 module.exports = router;

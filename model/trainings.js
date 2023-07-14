@@ -3,7 +3,7 @@ const { Schema } = mongoose;
 
 const trainingSchema = new Schema({
   title: {
-    type: Number,
+    type: String,
     required: true
   },
   details: {
